@@ -21,6 +21,7 @@
     "audit": "tsx src/cli.ts",
     "audit:ci": "tsx src/cli.ts --check",
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
