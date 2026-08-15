@@ -31,8 +31,8 @@ if (has("--help") || has("-h")) {
   invariant-audit [options]
 
   --root <dir>        tree to scan (default: cwd)
-  --out <dir>         where the run artifacts land (default: .invariant/last)
-  --baseline <file>   ledger of accepted findings (default: .invariant/baseline.json)
+  --out <dir>         where the run artifacts land, relative to cwd (default: .invariant/last)
+  --baseline <file>   the scanned tree's ledger of accepted findings (default: <root>/.invariant/baseline.json)
   --rules <file>      a module default-exporting Rule[] — replaces the built-ins
   --check             exit 1 on findings absent from the baseline
   --write-baseline    write every current finding into the baseline
@@ -43,16 +43,25 @@ if (has("--help") || has("-h")) {
 }
 
 const ROOT = resolve(argOf("--root", process.cwd()));
-const rel = (flag: string, fallback: string) => {
+
+// The baseline belongs to the tree being scanned — it is that project's ledger, so
+// `--root elsewhere` should read elsewhere's baseline. Output does not: artifacts are the
+// caller's, and resolving them against --root writes a directory into someone else's repo
+// just because you scanned it. They coincide in the common case, where root is cwd.
+const underRoot = (flag: string, fallback: string) => {
 	const v = argOf(flag, fallback);
 	return isAbsolute(v) ? v : join(ROOT, v);
 };
-const OUT = rel("--out", ".invariant/last");
-const BASELINE = rel("--baseline", ".invariant/baseline.json");
+const underCwd = (flag: string, fallback: string) => {
+	const v = argOf(flag, fallback);
+	return isAbsolute(v) ? v : resolve(process.cwd(), v);
+};
+const OUT = underCwd("--out", ".invariant/last");
+const BASELINE = underRoot("--baseline", ".invariant/baseline.json");
 const CHECK = has("--check");
 const JSON_OUT = has("--json");
 const WRITE_BASELINE = has("--write-baseline");
-const RULES_FILE = argv.includes("--rules") ? rel("--rules", "") : null;
+const RULES_FILE = argv.includes("--rules") ? underCwd("--rules", "") : null;
 
 const tty = process.stdout.isTTY && !process.env.NO_COLOR;
 const c = {
