@@ -226,7 +226,7 @@ export const RULES: Rule[] = [
 		id: "fetch-no-timeout",
 		severity: "medium",
 		message:
-			"fetch() with no AbortSignal. A hung remote leaves the caller pending forever; every other fetch in this codebase passes AbortSignal.timeout.",
+			"fetch() with no AbortSignal. A hung remote leaves the caller pending forever, with no way to cancel it.",
 		include: TS,
 		scan(src, code) {
 			const out: Hit[] = [];
@@ -283,6 +283,7 @@ export const RULES: Rule[] = [
 				if (!rejector) continue;
 				const after = body.slice(rel);
 				const timerBody = after.slice(0, sliceCall(after, after.indexOf("(")).length + 2);
+				// audit-ok(regexp-non-literal-source): rejector is captured as [\w$]+, so it holds no metacharacters
 				if (!new RegExp(`\\b${rejector}\\b`).test(timerBody)) continue;
 
 				const line = lineOf(code, open + 1 + rel);
@@ -313,7 +314,7 @@ export const RULES: Rule[] = [
 		id: "regexp-non-literal-source",
 		severity: "medium",
 		message:
-			"RegExp built from a non-literal source. Review what feeds it: an unbounded pattern from the wire or the model can backtrack catastrophically and hang the single-threaded server.",
+			"RegExp built from a non-literal source. Review what feeds it — a pattern from outside the program can backtrack catastrophically and hang whatever thread runs it.",
 		include: TS,
 		scan(src, code, path) {
 			// A test constructing a pattern from its own constants is not an untrusted-input
@@ -342,7 +343,7 @@ export const RULES: Rule[] = [
 		id: "innerhtml-interpolated",
 		severity: "medium",
 		message:
-			"Interpolated value assigned to innerHTML without escaping. Model output, server error strings and Hub metadata all reach the DOM here.",
+			"Interpolated value assigned to innerHTML without escaping. Anything not authored in this file is untrusted by the time it reaches the DOM.",
 		include: /\.(html|ts|tsx|js|jsx|mjs)$/,
 		scan(src, _code, path) {
 			if (path.endsWith(".test.ts")) return [];
