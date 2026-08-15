@@ -1,0 +1,43 @@
+name: CI
+
+# The gate. Typecheck, tests, and the tool run against its own source — a tool that
+# does not hold its own invariants has no business asserting yours.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is here because path handling is most of what this tool does, and
+        # separators, drive-relative paths and case-insensitive prefixes all differ there.
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run audit:ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-${{ matrix.os }}
+          path: .invariant/last
+          if-no-files-found: warn

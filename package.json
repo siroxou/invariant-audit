@@ -1,0 +1,47 @@
+{
+  "name": "invariant-audit",
+  "version": "0.1.0",
+  "description": "Scan source for architectural invariants that have quietly eroded. No dependencies, no config, no AST.",
+  "author": "Siroxou",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "invariant-audit": "bin/invariant-audit.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "audit": "tsx src/cli.ts",
+    "audit:ci": "tsx src/cli.ts --check",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "audit",
+    "invariants",
+    "static-analysis",
+    "lint",
+    "ci",
+    "baseline"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}
